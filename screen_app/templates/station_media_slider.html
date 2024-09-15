@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="media-slider" class="w-screen h-screen overflow-hidden relative">
+    {% for media in station.selected_media.all %}
+        <div class="media-slide absolute top-0 left-0 w-full h-full {% if forloop.first %}active{% endif %}" data-duration="{{ media.duration }}">
+            {% if media.file.name|lower|slice:"-4:" == ".pdf" %}
+            <h1>
+                {{ media.file.url }}
+            </h1>
+                <iframe src="{{ media.file.url }}" class="w-full h-full" ></iframe>
+            {% elif media.file.name|lower|slice:"-4:" == ".mp4" or media.file.name|lower|slice:"-4:" == ".mov" %}
+                <video src="{{ media.file.url }}" class="w-full h-full" autoplay muted></video>
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                    <p class="text-2xl">Unsupported file type</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.media-slide');
+    let currentSlide = 0;
+
+    function showSlide(index) {
+        slides[currentSlide].classList.remove('active');
+        slides[index].classList.add('active');
+        currentSlide = index;
+
+        // If it's a video, play it
+        const video = slides[index].querySelector('video');
+        if (video) {
+            video.currentTime = 0;  // Reset video to start
+            video.play();
+        }
+
+        // Schedule next slide
+        const duration = parseInt(slides[index].dataset.duration) * 1000 || 5000;  // Default to 5 seconds if no duration
+        setTimeout(() => {
+            showSlide((index + 1) % slides.length);
+        }, duration);
+    }
+
+    // Start the slider
+    if (slides.length > 0) {
+        showSlide(0);
+    }
+});
+</script>
+
+<style>
+    .media-slide {
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+    .media-slide.active {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}

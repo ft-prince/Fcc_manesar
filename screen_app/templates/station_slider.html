@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Media Slider</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            position: relative;
+        }
+        .slider-container video, .slider-container embed {
+            width: 100%;
+            height: 100%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .slider-container video.active, .slider-container embed.active {
+            display: block;
+        }
+        .slider-container embed {
+            border: none; /* Remove any default border */
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container" id="slider-container">
+        <!-- Media content will be injected here via JavaScript -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var stationId = {{ station.id }};
+            var url = '/station/' + stationId + '/media/';
+            var currentIndex = 0;
+            var mediaElements = [];
+            var slideshowTimer;
+
+            function playCurrentMedia() {
+                var currentMedia = mediaElements[currentIndex];
+                var duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds if no duration
+console.log(duration)
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(e => console.error("Error playing video:", e));
+                    // Use the video's duration as a fallback if the API doesn't provide one
+                    duration = currentMedia.duration * 1000 || 15000; // Duration in milliseconds
+                } else if (currentMedia.tagName === 'EMBED') {
+                    slideshowTimer = setTimeout(switchMedia, duration); // Use the provided duration
+                }
+            }
+
+            function stopCurrentMedia() {
+                var currentMedia = mediaElements[currentIndex];
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.pause();
+                    currentMedia.currentTime = 0;
+                } else if (currentMedia.tagName === 'EMBED') {
+                    clearTimeout(slideshowTimer);
+                }
+            }
+
+            function switchMedia() {
+                stopCurrentMedia();
+                mediaElements[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % mediaElements.length;
+                mediaElements[currentIndex].classList.add('active');
+                playCurrentMedia();
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.media && data.media.length > 0) {
+                        var sliderContainer = document.getElementById('slider-container');
+
+                        data.media.forEach(function(media, index) {
+                            var mediaElement;
+                            if (['mp4', 'mov'].includes(media.type)) {
+                                mediaElement = document.createElement('video');
+                                mediaElement.src = media.url;
+                                mediaElement.controls = false; // Remove controls
+                                mediaElement.loop = false;
+                                mediaElement.muted = true;
+                                mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
+                                mediaElement.className = index === 0 ? 'active' : '';
+                                mediaElement.addEventListener('ended', switchMedia);
+                            } else if (media.type === 'pdf') {
+                                mediaElement = document.createElement('embed');
+                                mediaElement.src = media.url;
+                                mediaElement.type = 'application/pdf';
+                                mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
+                                mediaElement.className = index === 0 ? 'active' : '';
+                            }
+                            sliderContainer.appendChild(mediaElement);
+                            mediaElements.push(mediaElement);
+                        });
+
+                        playCurrentMedia();
+                    } else {
+                        console.error('No media found for this station.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching media:', error);
+                });
+        });
+    </script>
+</body>
+</html>

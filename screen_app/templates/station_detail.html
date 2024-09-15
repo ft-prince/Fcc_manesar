@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">{{ station.name }}</h1>
+    <p class="mb-4"><span class="font-semibold">Manager:</span> {{ station.manager }}</p>
+    
+    <h2 class="text-xl font-semibold mb-2">Products:</h2>
+    <ul class="list-disc ml-6 mb-4">
+      {% for product in station.products.all %}
+        <li>{{ product.code }} - {{ product.name }}</li>
+      {% endfor %}
+    </ul>
+    
+    <h2 class="text-xl font-semibold mb-2">Media:</h2>
+    <div id="media-container">
+        <!-- Media content will be dynamically inserted by JavaScript -->
+    </div>
+
+    <div class="mt-4 space-x-2">
+      <a href="{% url 'station_update' station.pk %}" class="inline-block bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600">Edit</a>
+      <a href="{% url 'station_delete' station.pk %}" class="inline-block bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600">Delete</a>
+    </div>
+</div>
+
+
+
+<script>
+console.log('bye')
+    fetch('/station/1/media/')
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var stationId = {{ station.id }};
+        var url = '/station/' + stationId + '/media/';
+    
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                var mediaContainer = document.getElementById('media-container');
+                mediaContainer.innerHTML = ''; // Clear existing content
+    
+                if (data.media && data.media.length > 0) {
+                    data.media.forEach(function(media) {
+                        var mediaElement;
+                        var fileExtension = media.url.split('.').pop().toLowerCase();
+    
+                        if (fileExtension === 'pdf') {
+                            mediaElement = document.createElement('embed');
+                            mediaElement.src = media.url;
+                            mediaElement.type = 'application/pdf';
+                            mediaElement.width = '100%';
+                            mediaElement.height = '600px';
+                            mediaElement.className = "rounded shadow";
+                        } else if (['mp4', 'mov'].includes(fileExtension)) {
+                            mediaElement = document.createElement('video');
+                            mediaElement.src = media.url;
+                            mediaElement.controls = true;
+                            mediaElement.className = "max-w-full h-auto rounded shadow";
+                        }
+    
+                        if (mediaElement) {
+                            var mediaItem = document.createElement('div');
+                            mediaItem.className = 'media-item';
+    
+                            var mediaTitle = document.createElement('div');
+                            mediaTitle.className = 'media-title';
+                            mediaTitle.textContent = media.url.split('/').pop() || 'Untitled';
+    
+                            mediaItem.appendChild(mediaTitle);
+                            mediaItem.appendChild(mediaElement);
+                            mediaContainer.appendChild(mediaItem);
+                        }
+                    });
+                } else {
+                    mediaContainer.textContent = 'No media available for this station.';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching media:', error);
+                document.getElementById('media-container').textContent = 'Error loading media. Please try again later.';
+            });
+    });
+    </script>
+    {% endblock %}

@@ -1,0 +1,31 @@
+<!-- product_detail.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">{{ product.code }} - {{ product.name }}</h1>
+<div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4">Media Files</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for media in product.media.all %}
+        <div class="border p-4 rounded">
+            {% if media.file.name %}
+            <a href="{{ media.file.url }}" target="_blank" class="text-blue-500 hover:underline">View PDF</a>
+            {% else %}
+            <video controls class="w-full">
+                <source src="{{ media.file.url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            {% endif %}
+            <p class="mt-2">Duration: {{ media.duration }} seconds</p>
+        </div>
+        {% empty %}
+        <p>No media files available for this product.</p>
+        {% endfor %}
+    </div>
+</div>
+<div class="mt-6">
+    <a href="{% url 'product_update' product.pk %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 mr-2">Edit Product</a>
+    <a href="{% url 'product_delete' product.pk %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Delete Product</a>
+</div>
+{% endblock %}
+

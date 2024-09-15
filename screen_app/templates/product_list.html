@@ -1,0 +1,18 @@
+<!-- product_list.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Products</h1>
+<a href="{% url 'product_create' %}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-4 inline-block">Add New Product</a>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for product in products %}
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-2">{{ product.code }} - {{ product.name }}</h2>
+        <a href="{% url 'product_detail' product.pk %}" class="text-blue-500 hover:underline">View Details</a>
+    </div>
+    {% empty %}
+    <p>No products available.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
